@@ -42,7 +42,7 @@ void *func(void *arg) {
     int i;
 
     for(i = 0; i <= 5; i++) {
-        printf("  *\n", i);
+        printf("  **\n", i);
         sleep(1);
     }
 }
