@@ -22,4 +22,4 @@
                 2.2.1.3.1. Quando chega na última linha, verifica se o ataque colide com (^) / player
                     2.2.1.3.1.1. Se sim, fim de jogo
                     2.2.1.3.1.2. Se não, score aumenta
-    
+   2.3. Threads com whiles infinitos fazendo testes - while(1) 
