@@ -97,15 +97,20 @@ void startGame() {
 }
 
 void *attack(void *arg) {
-    int attackColumn;
+    int *attackParams = (int *)arg;
+    int localAttackRow = attackParams[0];
+    int localAttackColumn = attackParams[1];
 
     // Precisa ir de attackRow até ROWS - 1
-    for(int lin = attackRow; lin > 0; lin--) {
-        map[lin][attackColumn] = '*';
+    for(int lin = localAttackRow; lin > 0; lin--) {
+        map[lin][localAttackColumn] = '*';
 
         sleep(1);
 
         reloadMap();
+
+        // cada thread deve gerenciar sua própria condição de vida
+        // pthread_exit(NULL); para encerar a thread (não encerra todas, apenas a que chegou nesse ponto)
     }
 }
 
@@ -136,10 +141,16 @@ void *playerAction(void *arg) {
             }
             case 32:
             {
+                // Para garantir que cada thread tenha seu ataque, não se usa attackRow e attackColumn diretamente
+                int attackParams[2];
+
                 attackRow = currentRow - 1;
                 attackColumn = currentCol;
 
-                pthread_create(&(threads[0]), NULL, attack, NULL);
+                attackParams[0] = attackRow;
+                attackParams[1] = attackColumn;
+
+                pthread_create(&(threads[0]), NULL, attack, (void *)attackParams);
 
                 break;
             }
