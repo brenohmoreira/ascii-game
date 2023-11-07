@@ -111,6 +111,8 @@ void *attack(void *arg) {
 
 void *playerAction(void *arg) {
     while(1) {
+        printw("%d", currentCol);
+
         switch(getch()) {
             case KEY_LEFT:
             {
