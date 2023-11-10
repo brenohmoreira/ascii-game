@@ -74,7 +74,7 @@ void startGame() {
 
     for (int row = 0; row < ROWS; row++) {
         for (int column = 0; column < COLUMNS; column++) {
-            if(row == 0 || row == (ROWS - 1)) {
+            if(row == (ROWS - 1)) {
                 map[row][column] = '#';
             }
             else {
@@ -101,23 +101,31 @@ void *attack(void *arg) {
     int localAttackRow = attackParams[0];
     int localAttackColumn = attackParams[1];
 
-    // Precisa ir de attackRow até ROWS - 1
-    for(int lin = localAttackRow; lin > 0; lin--) {
+    for(int lin = localAttackRow; lin >= 0; lin--) {
+        if (lin + 1 < ROWS) {
+            map[lin + 1][localAttackColumn] = ' ';
+        }
+
+        // Recolocando cursor
+        map[localAttackRow + 1][currentCol] = '^';
+
         map[lin][localAttackColumn] = '*';
 
-        sleep(1);
+        usleep(55000);
 
         reloadMap();
-
-        // cada thread deve gerenciar sua própria condição de vida
-        // pthread_exit(NULL); para encerar a thread (não encerra todas, apenas a que chegou nesse ponto)
     }
+
+    map[0][localAttackColumn] = ' ';
+
+    reloadMap();
+
+    pthread_exit(NULL);
 }
 
 void *playerAction(void *arg) {
     while(1) {
         printw("%d", currentCol);
-
         switch(getch()) {
             case KEY_LEFT:
             {
