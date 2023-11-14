@@ -23,7 +23,6 @@ pthread_join(threads[0], NULL);
 */
 
 pthread_t threads[100];
-pthread_t attack_threads[10];
 
 char map[ROWS][COLUMNS];
 int currentCol = 0, currentRow = 8, score = 0, attackRow = 0, attackColumn, gameStatus = 0, numAttacks = 0;
@@ -122,19 +121,19 @@ void *enemy(void *arg) {
 
             usleep(800000);
         }
+        // ESSA BUDEGA DESGRAÇADA NÃO CONSEGUE CAPTAR TODA COLISÃO
         else if(map[rowEnemy][columnEnemy] == '*') {
-            map[rowEnemy][columnEnemy] = 'X';
-            pthread_exit(NULL);
+            map[rowEnemy - 1][columnEnemy] = 'X';
             reloadMap();
-            break;
+            pthread_exit(NULL);
         }
     }
 }
 
 void *invasion(void *arg) {
-    while (1) {
+    while (gameStatus) {
         pthread_create(&(threads[2]), NULL, enemy, NULL);
-        usleep(1500000); // Aguarda 3 segundos antes de criar a próxima onda de inimigos
+        usleep(1500000);
     }
 
     pthread_exit(NULL);
@@ -146,17 +145,25 @@ void *attack(void *arg) {
     int localAttackColumn = attackParams[1];
 
     for(int lin = localAttackRow; lin >= 0; lin--) {
-        if (lin + 1 < ROWS) {
-            map[lin + 1][localAttackColumn] = ' ';
+        if (map[lin][localAttackColumn] == 'v') {
+            score += 10;
+            map[lin + 1][currentCol] = ' ';
+            reloadMap();
+            pthread_exit(NULL);
         }
+        else {
+            if (lin + 1 < ROWS) {
+                map[lin + 1][localAttackColumn] = ' ';
+            }
 
-        map[localAttackRow + 1][currentCol] = '^';
+            map[localAttackRow + 1][currentCol] = '^';
 
-        map[lin][localAttackColumn] = '*';
+            map[lin][localAttackColumn] = '*';
 
-        usleep(100000);
+            usleep(150000);
 
-        reloadMap();
+            reloadMap();
+        }
     }
 
     map[0][localAttackColumn] = ' ';
@@ -169,7 +176,7 @@ void *attack(void *arg) {
 void *playerAction(void *arg) {
     while(1) {
         //printw("%d", gameStatus);
-        printw("%d", 1 + (rand() % 38));
+        printw("Status: %d\n", score);
         switch(getch()) {
             case KEY_LEFT:
             {
