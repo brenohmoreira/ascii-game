@@ -23,8 +23,10 @@ pthread_join(threads[0], NULL);
 */
 
 pthread_t threads[100];
+pthread_t attack_threads[10];
+
 char map[ROWS][COLUMNS];
-int currentCol = 0, currentRow = 8, score = 0, attackRow = 0, attackColumn;
+int currentCol = 0, currentRow = 8, score = 0, attackRow = 0, attackColumn, gameStatus = 0, numAttacks = 0;
 
 // Structs
 typedef struct {
@@ -35,6 +37,9 @@ typedef struct {
 void reloadMap();
 void startGame();
 void *playerAction();
+void *invasion();
+void *enemy();
+
 Player playerData();
 
 // Functions
@@ -72,6 +77,8 @@ void startGame() {
     noecho(); // teclas digitadas não são exibidas
     keypad(stdscr, TRUE); // permite entrada de caracteres especiais
 
+    gameStatus = 1;
+
     for (int row = 0; row < ROWS; row++) {
         for (int column = 0; column < COLUMNS; column++) {
             if(row == (ROWS - 1)) {
@@ -93,11 +100,48 @@ void startGame() {
     }
 
     pthread_create(&(threads[0]), NULL, playerAction, NULL);
+    pthread_create(&(threads[1]), NULL, invasion, NULL);
+
     pthread_join(threads[0], NULL);
+    pthread_join(threads[1], NULL);
+}
+
+void *enemy(void *arg) {
+    int columnEnemy = 1 + (rand() % 38);
+    int rowEnemy;
+
+    for (rowEnemy = 0; rowEnemy < ROWS - 1; rowEnemy++) {
+        if(map[rowEnemy][columnEnemy] == ' ') {
+            if(rowEnemy != 0 && rowEnemy != ROWS - 1) {
+                map[rowEnemy - 1][columnEnemy] = ' ';
+            }
+
+            map[rowEnemy][columnEnemy] = 'v';
+
+            reloadMap();
+
+            usleep(800000);
+        }
+        else if(map[rowEnemy][columnEnemy] == '*') {
+            map[rowEnemy][columnEnemy] = 'X';
+            pthread_exit(NULL);
+            reloadMap();
+            break;
+        }
+    }
+}
+
+void *invasion(void *arg) {
+    while (1) {
+        pthread_create(&(threads[2]), NULL, enemy, NULL);
+        usleep(1500000); // Aguarda 3 segundos antes de criar a próxima onda de inimigos
+    }
+
+    pthread_exit(NULL);
 }
 
 void *attack(void *arg) {
-    int *attackParams = (int *)arg;
+    int *attackParams = (int*) arg;
     int localAttackRow = attackParams[0];
     int localAttackColumn = attackParams[1];
 
@@ -106,12 +150,11 @@ void *attack(void *arg) {
             map[lin + 1][localAttackColumn] = ' ';
         }
 
-        // Recolocando cursor
         map[localAttackRow + 1][currentCol] = '^';
 
         map[lin][localAttackColumn] = '*';
 
-        usleep(55000);
+        usleep(100000);
 
         reloadMap();
     }
@@ -125,7 +168,8 @@ void *attack(void *arg) {
 
 void *playerAction(void *arg) {
     while(1) {
-        printw("%d", currentCol);
+        //printw("%d", gameStatus);
+        printw("%d", 1 + (rand() % 38));
         switch(getch()) {
             case KEY_LEFT:
             {
