@@ -22,10 +22,14 @@ pthread_join(threads[0], NULL);
 
 */
 
-pthread_t threads[100];
-
 char map[ROWS][COLUMNS];
-int currentCol = 0, currentRow = 8, score = 0, attackRow = 0, attackColumn, gameStatus = 0, numAttacks = 0;
+int currentCol = 0, currentRow = 8, score = 0, attackRow = 0, attackColumn, gameStatus = 0, numAttacks = 0, counterEnemy = 0, counterAttack = 0;
+
+pthread_t thread_enemy[500];
+pthread_t thread_attack[100];
+pthread_t thread_player_action;
+pthread_t thread_invasion;
+pthread_mutex_t map_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Structs
 typedef struct {
@@ -56,7 +60,9 @@ Player playerData() {
 }
 
 void reloadMap() {
-    // clear screen
+    pthread_mutex_lock(&map_mutex);
+    pthread_mutex_unlock(&map_mutex);
+
     clear();
 
     for(int i = 0; i < ROWS; i++) {
@@ -98,11 +104,11 @@ void startGame() {
         printw("\n");
     }
 
-    pthread_create(&(threads[0]), NULL, playerAction, NULL);
-    pthread_create(&(threads[1]), NULL, invasion, NULL);
+    pthread_create(&(thread_player_action), NULL, playerAction, NULL);
+    pthread_create(&(thread_invasion), NULL, invasion, NULL);
 
-    pthread_join(threads[0], NULL);
-    pthread_join(threads[1], NULL);
+    pthread_join(thread_player_action, NULL);
+    pthread_join(thread_invasion, NULL);
 }
 
 void *enemy(void *arg) {
@@ -124,6 +130,7 @@ void *enemy(void *arg) {
         // ESSA BUDEGA DESGRAÇADA NÃO CONSEGUE CAPTAR TODA COLISÃO
         else if(map[rowEnemy][columnEnemy] == '*') {
             map[rowEnemy - 1][columnEnemy] = 'X';
+
             reloadMap();
             pthread_exit(NULL);
         }
@@ -132,8 +139,8 @@ void *enemy(void *arg) {
 
 void *invasion(void *arg) {
     while (gameStatus) {
-        pthread_create(&(threads[2]), NULL, enemy, NULL);
-        usleep(1500000);
+        pthread_create(&(thread_enemy[counterEnemy++]), NULL, enemy, NULL);
+        usleep(3000000);
     }
 
     pthread_exit(NULL);
@@ -209,7 +216,7 @@ void *playerAction(void *arg) {
                 attackParams[0] = attackRow;
                 attackParams[1] = attackColumn;
 
-                pthread_create(&(threads[0]), NULL, attack, (void *)attackParams);
+                pthread_create(&(thread_attack[counterAttack++]), NULL, attack, (void *)attackParams);
 
                 break;
             }
