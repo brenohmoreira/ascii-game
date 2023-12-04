@@ -1,0 +1,82 @@
+// ...
+
+typedef struct {
+    char playerName[MAX_NAME];
+    int finalScore;
+} GameStats;
+
+// ...
+
+void defeatScreen(GameStats stats) {
+    clear();
+    printw("Game Over!\n");
+    printw("Player: %s\n", stats.playerName);
+    printw("Score: %d\n", stats.finalScore);
+    printw("Do you want to continue? (y/n): ");
+    refresh();
+
+    char decision;
+    scanf(" %c", &decision);
+
+    if (decision == 'y' || decision == 'Y') {
+        menu();
+    } else {
+        endwin(); // Terminate curses mode
+        exit(0);
+    }
+}
+
+// ...
+
+void startGame() {
+    // ...
+
+    pthread_join(thread_player_action, NULL);
+    pthread_join(thread_invasion, NULL);
+
+    GameStats stats;
+    strcpy(stats.playerName, player.name);
+    stats.finalScore = score;
+
+    defeatScreen(stats);
+}
+
+// ...
+
+void menu() {
+    // ...
+
+    do {
+        // ...
+
+        switch(op) {
+            case 1: {
+                Player player = playerData();
+
+                // ...
+
+                startGame();
+
+                break;
+            }
+            case 2: {
+                break;
+            }
+            case 3: {
+                endwin(); // Terminate curses mode
+                exit(0);
+
+                break;
+            }
+        }
+    }
+    while(op < 5 && op > 1);
+}
+
+// ...
+
+int main() {
+    menu();
+
+    return 1;
+}
